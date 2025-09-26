@@ -1,0 +1,116 @@
+alias: Air Conditioning Forgotten
+description: ""
+triggers:
+  - trigger: numeric_state
+    entity_id:
+      - sensor.sensi_sensi_279414_temperature
+    above: 79
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+conditions:
+  - condition: and
+    conditions:
+      - condition: device
+        device_id: b984c74946d748f7539854621bbe309e
+        domain: climate
+        entity_id: 910b595fe4ad04f4bf97779b84a4c307
+        type: is_hvac_mode
+        hvac_mode: "off"
+      - condition: state
+        entity_id: input_boolean.ac_sensor
+        state: "off"
+actions:
+  - choose:
+      - conditions:
+          - condition: and
+            conditions:
+              - condition: state
+                entity_id: binary_sensor.front_door_sensor
+                state: "off"
+              - condition: state
+                state: "off"
+                entity_id: binary_sensor.back_door_sensor
+        sequence:
+          - action: climate.set_hvac_mode
+            metadata: {}
+            data:
+              hvac_mode: cool
+            target:
+              device_id: b984c74946d748f7539854621bbe309e
+          - action: climate.set_temperature
+            metadata: {}
+            data:
+              temperature: 80
+            target:
+              device_id: b984c74946d748f7539854621bbe309e
+          - action: tts.cloud_say
+            metadata: {}
+            data:
+              cache: false
+              entity_id: media_player.matt_s_tab_s6_lite
+              message: >-
+                It seems you may have forgot to turn the air conditioning on
+                today. For your convenience I have set the air conditioning to
+                80°F
+            enabled: true
+          - action: notify.mobile_app_matthews_iphone_2
+            metadata: {}
+            data:
+              message: The Thermostat has been set to Cool at 80°F
+          - action: notify.mobile_app_moms_phone
+            metadata: {}
+            data:
+              message: The Thermostat has been set to Cool at 80°F
+      - conditions:
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: binary_sensor.front_door_sensor
+                state: "on"
+              - condition: state
+                entity_id: binary_sensor.back_door_sensor
+                state: "on"
+        sequence:
+          - action: tts.cloud_say
+            metadata: {}
+            data:
+              cache: false
+              entity_id: media_player.matt_s_tab_s6_lite
+              message: >-
+                I recommend closing the doors and turning on the air
+                conditioning. If you close the doors within the next 5 minutes I
+                can set the air conditioning to 80°F for you.
+          - wait_template: |
+              {{ is_state('binary_sensor.front_door_sensor', 'off') and
+                 is_state('binary_sensor.back_door_sensor', 'off') }}
+            timeout: "00:05:00"
+            continue_on_timeout: false
+          - action: climate.set_hvac_mode
+            metadata: {}
+            data:
+              hvac_mode: cool
+            target:
+              device_id: b984c74946d748f7539854621bbe309e
+          - action: climate.set_temperature
+            metadata: {}
+            data:
+              temperature: 80
+            target:
+              device_id: b984c74946d748f7539854621bbe309e
+          - action: tts.cloud_say
+            metadata: {}
+            data:
+              cache: false
+              entity_id: media_player.matt_s_tab_s6_lite
+              message: >-
+                Thank you for closing the doors. For your convenience I have set
+                the air conditioning to 80°F
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.ac_sensor
+mode: parallel
+max: 2

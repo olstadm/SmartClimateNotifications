@@ -1,0 +1,113 @@
+alias: Temperature Notification
+description: ""
+triggers:
+  - trigger: numeric_state
+    entity_id:
+      - sensor.outdoortempcorrected
+    for:
+      hours: 0
+      minutes: 10
+      seconds: 0
+    below: sensor.kitchen_temperature_zigbee_temperature
+conditions:
+  - condition: state
+    entity_id: input_boolean.temperature_notification_sent
+    state: "off"
+actions:
+  - if:
+      - condition: time
+        after: "22:00:00"
+        weekday:
+          - sat
+          - fri
+          - thu
+          - wed
+          - tue
+          - mon
+          - sun
+        before: "08:00:00"
+    then:
+      - action: media_player.volume_set
+        metadata: {}
+        data:
+          volume_level: 0
+        target:
+          device_id: 84e3190e0c083460b00173258b1942c3
+    else:
+      - action: media_player.volume_set
+        metadata: {}
+        data:
+          volume_level: 1
+        target:
+          device_id: 84e3190e0c083460b00173258b1942c3
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.temperature_notification_sent
+  - action: notify.mobile_app_matthews_iphone_2
+    metadata: {}
+    data:
+      title: "Temperature Notification:"
+      message: >-
+        Inside it is currently
+        {{states('sensor.kitchen_temperature_zigbee_temperature') }}°F Outside
+        it is currently {{states('sensor.outdoortempcorrected') }}°F
+  - action: notify.mobile_app_moms_phone
+    metadata: {}
+    data:
+      title: "Temperature Notification:"
+      message: >-
+        Inside it is currently
+        {{states('sensor.kitchen_temperature_zigbee_temperature') }}°F Outside
+        it is currently {{states('sensor.outdoortempcorrected') }}°F
+  - action: tts.cloud_say
+    metadata: {}
+    data:
+      cache: false
+      entity_id: media_player.matt_s_tab_s6_lite
+      message: >-
+        It is currently
+        {{states('sensor.kitchen_temperature_zigbee_temperature') }}°F Inside,
+        and {{states('sensor.outdoortempcorrected') }}°F Outside. 
+          
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 15
+      milliseconds: 0
+  - if:
+      - condition: device
+        device_id: b984c74946d748f7539854621bbe309e
+        domain: climate
+        entity_id: 910b595fe4ad04f4bf97779b84a4c307
+        type: is_hvac_mode
+        hvac_mode: cool
+    then:
+      - action: climate.set_hvac_mode
+        metadata: {}
+        data:
+          hvac_mode: "off"
+        target:
+          device_id: b984c74946d748f7539854621bbe309e
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 3
+          milliseconds: 0
+      - action: tts.cloud_say
+        metadata: {}
+        data:
+          entity_id: media_player.matt_s_tab_s6_lite
+          message: "For your convenience I have turned off the air conditioning. "
+  - delay:
+      hours: 1
+      minutes: 0
+      seconds: 0
+      milliseconds: 0
+  - action: input_boolean.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.ac_sensor
+mode: single

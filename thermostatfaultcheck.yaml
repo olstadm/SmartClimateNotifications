@@ -1,0 +1,36 @@
+alias: Thermostat Fault Check
+description: ""
+triggers:
+  - trigger: state
+    entity_id:
+      - input_boolean.ac_sensor
+    from: "off"
+    to: "on"
+conditions: []
+actions:
+  - delay:
+      hours: 0
+      minutes: 5
+      seconds: 30
+      milliseconds: 0
+  - repeat:
+      sequence:
+        - action: climate.set_temperature
+          metadata: {}
+          data:
+            hvac_mode: cool
+            temperature: 80
+          target:
+            device_id: b984c74946d748f7539854621bbe309e
+        - action: notify.mobile_app_matthews_iphone_2
+          metadata: {}
+          data:
+            message: AC Failed to turn on, trying again
+      until:
+        - condition: device
+          device_id: b984c74946d748f7539854621bbe309e
+          domain: climate
+          entity_id: 910b595fe4ad04f4bf97779b84a4c307
+          type: is_hvac_mode
+          hvac_mode: cool
+mode: single
